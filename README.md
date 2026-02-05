@@ -39,9 +39,8 @@ An AI Helpdesk Chatbot that validates users, retrieves knowledge via RAG, genera
 
 ---
 
-## Recruiter Quick Test (60 seconds)
+## Demo to test
 
-**Demo UI:** https://your-demo-url.example
 
 **1) Chat**
 ```bash
