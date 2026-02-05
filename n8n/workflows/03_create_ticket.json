@@ -1,0 +1,56 @@
+{
+  "name": "Create Ticket",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "create-ticket",
+        "httpMethod": "POST",
+        "responseMode": "onReceived"
+      },
+      "id": "Webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "string": [
+            {
+              "value1": "={{ $json.priority }}",
+              "operation": "equals",
+              "value2": "HIGH"
+            }
+          ]
+        }
+      },
+      "id": "HighPriority",
+      "name": "High Priority?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 1,
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO tickets(title, status, priority, description) VALUES('{{ $json.title }}','OPEN','{{ $json.priority }}','{{ $json.description }}') RETURNING id;"
+      },
+      "id": "InsertTicket",
+      "name": "Insert Ticket",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [600, 200],
+      "credentials": {
+        "postgres": {
+          "id": "helpdesk-postgres",
+          "name": "helpdesk-postgres"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "High Priority?", "type": "main", "index": 0 }]] },
+    "High Priority?": { "main": [[{ "node": "Insert Ticket", "type": "main", "index": 0 }]] }
+  }
+}

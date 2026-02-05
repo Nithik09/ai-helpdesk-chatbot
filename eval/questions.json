@@ -1,0 +1,22 @@
+[
+  {"question": "How do I reset my password?", "expected_titles": ["Password Reset Policy"]},
+  {"question": "What should I do if VPN shows error 809?", "expected_titles": ["VPN Troubleshooting Guide"]},
+  {"question": "What is the onboarding Day 1 checklist?", "expected_titles": ["Onboarding IT Checklist"]},
+  {"question": "How old does a laptop need to be for replacement?", "expected_titles": ["Laptop Replacement Policy"]},
+  {"question": "What are SEV1 and SEV2 definitions?", "expected_titles": ["Incident Response Playbook"]},
+  {"question": "What is the minimum password length?", "expected_titles": ["Password Reset Policy"]},
+  {"question": "Do I need manager approval for restricted systems?", "expected_titles": ["Onboarding IT Checklist"]},
+  {"question": "How quickly should incidents be acknowledged?", "expected_titles": ["Incident Response Playbook"]},
+  {"question": "What info should I include when VPN fails?", "expected_titles": ["VPN Troubleshooting Guide"]},
+  {"question": "How long is a temporary password valid?", "expected_titles": ["Password Reset Policy"]},
+  {"question": "What is the process to replace a laptop?", "expected_titles": ["Laptop Replacement Policy"]},
+  {"question": "What tools are needed for MFA enrollment?", "expected_titles": ["Onboarding IT Checklist"]},
+  {"question": "What are the incident severity levels?", "expected_titles": ["Incident Response Playbook"]},
+  {"question": "Can I access compensation bands?", "expected_titles": []},
+  {"question": "What is the vacation policy?", "expected_titles": []},
+  {"question": "How to reset MFA?", "expected_titles": ["VPN Troubleshooting Guide"]},
+  {"question": "What steps to open a ticket for laptop replacement?", "expected_titles": ["Laptop Replacement Policy"]},
+  {"question": "Where is the self-service password portal?", "expected_titles": ["Password Reset Policy"]},
+  {"question": "When should I create an incident ticket?", "expected_titles": ["Incident Response Playbook"]},
+  {"question": "What is required for VPN access?", "expected_titles": ["Onboarding IT Checklist", "VPN Troubleshooting Guide"]}
+]

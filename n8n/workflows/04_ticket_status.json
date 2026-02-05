@@ -1,0 +1,37 @@
+{
+  "name": "Ticket Status",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "ticket-status",
+        "httpMethod": "POST",
+        "responseMode": "onReceived"
+      },
+      "id": "Webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, status, priority FROM tickets WHERE id={{ $json.ticket_id }};"
+      },
+      "id": "GetTicket",
+      "name": "Get Ticket",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [400, 300],
+      "credentials": {
+        "postgres": {
+          "id": "helpdesk-postgres",
+          "name": "helpdesk-postgres"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Get Ticket", "type": "main", "index": 0 }]] }
+  }
+}

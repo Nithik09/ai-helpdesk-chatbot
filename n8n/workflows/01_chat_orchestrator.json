@@ -1,0 +1,98 @@
+{
+  "name": "Chat Orchestrator",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "helpdesk-chat",
+        "httpMethod": "POST",
+        "responseMode": "responseNode"
+      },
+      "id": "Webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM users WHERE id={{ $json.user_id }};"
+      },
+      "id": "GetUser",
+      "name": "Get User",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2,
+      "position": [400, 300],
+      "credentials": {
+        "postgres": {
+          "id": "helpdesk-postgres",
+          "name": "helpdesk-postgres"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "url": "={{ $vars.BACKEND_URL }}/embed",
+        "sendBody": true,
+        "bodyParametersJson": "{\"texts\": [{{ $node[\"Webhook\"].json[\"question\"] }}]}"
+      },
+      "id": "EmbedQuestion",
+      "name": "Embed Question",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://qdrant:6333/collections/helpdesk/points/search",
+        "sendBody": true,
+        "bodyParametersJson": "{\"vector\": {{ $json.vectors[0] }}, \"limit\": 4, \"with_payload\": true}"
+      },
+      "id": "SearchQdrant",
+      "name": "Search Qdrant",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [800, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const role = $node['Get User'].json[0].role;\nconst hits = $json.result || [];\nconst contexts = hits.filter(h => (h.payload.allowed_roles || 'employee,it_agent,admin').includes(role))\n  .map(h => ({ title: h.payload.title, chunk_id: h.payload.chunk_id, text: h.payload.text }));\nreturn [{ json: { question: $node['Webhook'].json.question, contexts } }];"
+      },
+      "id": "BuildContext",
+      "name": "Build Context",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1000, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $vars.BACKEND_URL }}/llm",
+        "sendBody": true,
+        "bodyParametersJson": "{\"question\": {{ $json.question }}, \"contexts\": {{ $json.contexts }} }"
+      },
+      "id": "CallLLM",
+      "name": "Call LLM",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1200, 300]
+    },
+    {
+      "parameters": {
+        "responseData": "={{ $json }}"
+      },
+      "id": "Respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1400, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Get User", "type": "main", "index": 0 }]] },
+    "Get User": { "main": [[{ "node": "Embed Question", "type": "main", "index": 0 }]] },
+    "Embed Question": { "main": [[{ "node": "Search Qdrant", "type": "main", "index": 0 }]] },
+    "Search Qdrant": { "main": [[{ "node": "Build Context", "type": "main", "index": 0 }]] },
+    "Build Context": { "main": [[{ "node": "Call LLM", "type": "main", "index": 0 }]] },
+    "Call LLM": { "main": [[{ "node": "Respond to Webhook", "type": "main", "index": 0 }]] }
+  }
+}

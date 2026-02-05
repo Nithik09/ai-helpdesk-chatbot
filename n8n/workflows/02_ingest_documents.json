@@ -1,0 +1,67 @@
+{
+  "name": "Ingest Documents",
+  "nodes": [
+    {
+      "parameters": {
+        "path": "helpdesk-ingest",
+        "httpMethod": "POST",
+        "responseMode": "onReceived"
+      },
+      "id": "Webhook",
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [200, 300]
+    },
+    {
+      "parameters": {
+        "filePath": "/data/docs/*.md"
+      },
+      "id": "ReadDocs",
+      "name": "Read Docs",
+      "type": "n8n-nodes-base.readBinaryFiles",
+      "typeVersion": 1,
+      "position": [400, 300]
+    },
+    {
+      "parameters": {
+        "functionCode": "const itemsOut = [];\nfor (const item of items) {\n  const buffer = item.binary.data.data;\n  const text = Buffer.from(buffer).toString('utf8');\n  const title = item.binary.data.fileName.replace('.md','');\n  const isRestricted = title.startsWith('hr_');\n  const allowed_roles = isRestricted ? 'admin' : 'employee,it_agent,admin';\n  const chunks = text.split(/\\n\\n+/).filter(Boolean);\n  chunks.forEach((chunk, idx) => {\n    itemsOut.push({\n      json: { title, chunk_id: `${title}-${idx+1}`, text: chunk.trim(), allowed_roles }\n    });\n  });\n}\nreturn itemsOut;"
+      },
+      "id": "Chunk",
+      "name": "Chunk Docs",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [600, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $vars.BACKEND_URL }}/embed",
+        "sendBody": true,
+        "bodyParametersJson": "{\"texts\": [{{ $json.text }}]}"
+      },
+      "id": "Embed",
+      "name": "Embed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [800, 300]
+    },
+    {
+      "parameters": {
+        "url": "http://qdrant:6333/collections/helpdesk/points?wait=true",
+        "sendBody": true,
+        "bodyParametersJson": "{\"points\":[{\"id\":\"{{ $json.chunk_id.replace(/[^a-zA-Z0-9]/g,'').slice(0,36) }}\",\"vector\":{{ $json.vectors[0] }},\"payload\":{\"title\":\"{{ $json.title }}\",\"chunk_id\":\"{{ $json.chunk_id }}\",\"text\":\"{{ $json.text }}\",\"allowed_roles\":\"{{ $json.allowed_roles }}\"}}]}"
+      },
+      "id": "Qdrant",
+      "name": "Upsert Qdrant",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1000, 300]
+    }
+  ],
+  "connections": {
+    "Webhook": { "main": [[{ "node": "Read Docs", "type": "main", "index": 0 }]] },
+    "Read Docs": { "main": [[{ "node": "Chunk Docs", "type": "main", "index": 0 }]] },
+    "Chunk Docs": { "main": [[{ "node": "Embed", "type": "main", "index": 0 }]] },
+    "Embed": { "main": [[{ "node": "Upsert Qdrant", "type": "main", "index": 0 }]] }
+  }
+}
